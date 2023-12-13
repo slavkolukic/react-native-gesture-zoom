@@ -49,8 +49,60 @@ export const GestureZoom: FC<PreviewMediaListItemImageProps> = memo(
     const pinchFocalX = useSharedValue(0);
     const pinchFocalY = useSharedValue(0);
 
-    const makeupTranslationX = useSharedValue(0);
-    const makeupTranslationY = useSharedValue(0);
+    const resetState = () => {
+      "worklet";
+      scale.value = withSpring(1, bounceBackConfig);
+      savedScale.value = 1;
+      panTranslationX.value = withSpring(0, bounceBackConfig);
+      panTranslationY.value = withSpring(0, bounceBackConfig);
+      savedPanTranslationX.value = 0;
+      savedPanTranslationY.value = 0;
+      pinchTranslationX.value = withSpring(0, bounceBackConfig);
+      pinchTranslationY.value = withSpring(0, bounceBackConfig);
+      savedPinchTranslationX.value = 0;
+      savedPinchTranslationY.value = 0;
+      pinchFocalX.value = 0;
+      pinchFocalY.value = 0;
+    };
+
+    const handleOutOfBounds = () => {
+      "worklet";
+      const scaleWidthDifferenceHalf = (WINDOW_WIDTH * (scale.value - 1)) / 2;
+      const scaleHeightDifferenceHalf = (WINDOW_HEIGHT * (scale.value - 1)) / 2;
+
+      const combinedTranslationX = panTranslationX.value + pinchTranslationX.value;
+      const combinedTranslationY = panTranslationY.value + pinchTranslationY.value;
+
+      const offsetX = combinedTranslationX - scaleWidthDifferenceHalf;
+      const offsetY = combinedTranslationY - scaleHeightDifferenceHalf;
+
+      const maxOffsetX = WINDOW_WIDTH - scale.value * WINDOW_WIDTH;
+      const maxOffsetY = WINDOW_HEIGHT - scale.value * WINDOW_HEIGHT;
+
+      if (offsetX > 0) {
+        const newPanX = panTranslationX.value - offsetX;
+        panTranslationX.value = withSpring(newPanX, bounceBackConfig);
+        savedPanTranslationX.value = newPanX;
+      } else if (offsetX < WINDOW_WIDTH - scale.value * WINDOW_WIDTH) {
+        const newPanX = panTranslationX.value - offsetX + maxOffsetX;
+        panTranslationX.value = withSpring(newPanX, bounceBackConfig);
+        savedPanTranslationX.value = newPanX;
+      } else {
+        savedPanTranslationX.value = panTranslationX.value;
+      }
+
+      if (offsetY > 0) {
+        const newPanY = panTranslationY.value - offsetY;
+        panTranslationY.value = withSpring(newPanY, bounceBackConfig);
+        savedPanTranslationY.value = newPanY;
+      } else if (offsetY < maxOffsetY) {
+        const newPanY = panTranslationY.value - offsetY + maxOffsetY;
+        panTranslationY.value = withSpring(newPanY, bounceBackConfig);
+        savedPanTranslationY.value = newPanY;
+      } else {
+        savedPanTranslationY.value = panTranslationY.value;
+      }
+    };
 
     const pinch = Gesture.Pinch()
       .onStart((e) => {
@@ -75,6 +127,8 @@ export const GestureZoom: FC<PreviewMediaListItemImageProps> = memo(
         savedScale.value = scale.value;
         savedPinchTranslationX.value = pinchTranslationX.value;
         savedPinchTranslationY.value = pinchTranslationY.value;
+
+        if (scale.value < 1) resetState();
       });
 
     const pan = Gesture.Pan()
@@ -83,8 +137,9 @@ export const GestureZoom: FC<PreviewMediaListItemImageProps> = memo(
         panTranslationY.value = event.translationY + savedPanTranslationY.value;
       })
       .onEnd((event) => {
-        savedPanTranslationX.value = panTranslationX.value;
-        savedPanTranslationY.value = panTranslationY.value;
+        if (scale.value < 1) return;
+
+        handleOutOfBounds();
       })
       .maxPointers(2)
       .minPointers(2);
@@ -98,8 +153,6 @@ export const GestureZoom: FC<PreviewMediaListItemImageProps> = memo(
         { translateX: pinchTranslationX.value },
         { translateY: pinchTranslationY.value },
         { scale: scale.value },
-        { translateX: makeupTranslationX.value },
-        { translateY: makeupTranslationY.value },
       ],
     }));
 
