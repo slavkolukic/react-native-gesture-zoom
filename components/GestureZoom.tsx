@@ -4,7 +4,6 @@ import { Dimensions, View, StyleSheet } from "react-native";
 import { Gesture, GestureDetector, GestureHandlerRootView } from "react-native-gesture-handler";
 import Animated, {
   WithSpringConfig,
-  runOnJS,
   useAnimatedStyle,
   useSharedValue,
   withSpring,
@@ -13,16 +12,14 @@ import Animated, {
 const WINDOW_HEIGHT = Dimensions.get("window").height;
 const WINDOW_WIDTH = Dimensions.get("window").width;
 
-const bounceBackConfig: WithSpringConfig = { mass: 1, damping: 12, stiffness: 80 };
-
 const HALF_WINDOW_WIDTH = WINDOW_WIDTH / 2;
 const HALF_WINDOW_HEIGHT = WINDOW_HEIGHT / 2;
 
-const MAX_ALLOWED_SCALE = 5;
+const bounceBackConfig: WithSpringConfig = { mass: 1, damping: 12, stiffness: 80 };
 
-interface PreviewMediaListItemImageProps extends PropsWithChildren {}
+interface GestureZoomItemProps extends PropsWithChildren {}
 
-export const GestureZoom: FC<PreviewMediaListItemImageProps> = memo(({ children }) => {
+export const GestureZoom: FC<GestureZoomItemProps> = memo(({ children }) => {
   const scale = useSharedValue(1);
   const savedScale = useSharedValue(1);
 
@@ -44,13 +41,13 @@ export const GestureZoom: FC<PreviewMediaListItemImageProps> = memo(({ children 
   const resetState = () => {
     "worklet";
     scale.value = withSpring(1, bounceBackConfig);
-    savedScale.value = 1;
     panTranslationX.value = withSpring(0, bounceBackConfig);
     panTranslationY.value = withSpring(0, bounceBackConfig);
-    savedPanTranslationX.value = 0;
-    savedPanTranslationY.value = 0;
     pinchTranslationX.value = withSpring(0, bounceBackConfig);
     pinchTranslationY.value = withSpring(0, bounceBackConfig);
+    savedScale.value = 1;
+    savedPanTranslationX.value = 0;
+    savedPanTranslationY.value = 0;
     savedPinchTranslationX.value = 0;
     savedPinchTranslationY.value = 0;
     zoomPointX.value = 0;
@@ -106,7 +103,6 @@ export const GestureZoom: FC<PreviewMediaListItemImageProps> = memo(({ children 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-
     backgroundColor: "black",
   },
 });
