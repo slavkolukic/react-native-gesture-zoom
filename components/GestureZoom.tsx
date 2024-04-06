@@ -63,8 +63,11 @@ export const GestureZoom: FC<GestureZoomItemProps> = memo(({ children }) => {
       const newScale = savedScale.value * e.scale;
       const scaleChange = newScale - savedScale.value;
 
-      const offsetX = (zoomPointX.value - savedPinchTranslationX.value) / savedScale.value;
-      const offsetY = (zoomPointY.value - savedPinchTranslationY.value) / savedScale.value;
+      const x = savedPinchTranslationX.value + savedPanTranslationX.value;
+      const y = savedPinchTranslationY.value + savedPanTranslationY.value;
+
+      const offsetX = (zoomPointX.value - x) / savedScale.value;
+      const offsetY = (zoomPointY.value - y) / savedScale.value;
 
       pinchTranslationX.value = -(offsetX * scaleChange) + savedPinchTranslationX.value;
       pinchTranslationY.value = -(offsetY * scaleChange) + savedPinchTranslationY.value;
@@ -79,19 +82,37 @@ export const GestureZoom: FC<GestureZoomItemProps> = memo(({ children }) => {
       if (scale.value < 1) resetState();
     });
 
+  const pan = Gesture.Pan()
+    .onChange((event) => {
+      panTranslationX.value = event.translationX + savedPanTranslationX.value;
+      panTranslationY.value = event.translationY + savedPanTranslationY.value;
+    })
+    .onEnd(() => {
+      savedPanTranslationX.value = panTranslationX.value;
+      savedPanTranslationY.value = panTranslationY.value;
+
+      if (scale.value < 1) resetState();
+    })
+    .maxPointers(2)
+    .minPointers(2);
+
   const animatedStyle = useAnimatedStyle(() => ({
     borderWidth: 1,
     borderColor: "cyan",
     transform: [
+      { translateX: panTranslationX.value },
+      { translateY: panTranslationY.value },
       { translateX: pinchTranslationX.value },
       { translateY: pinchTranslationY.value },
       { scale: scale.value },
     ],
   }));
 
+  const composed = Gesture.Simultaneous(pinch, pan);
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <GestureDetector gesture={pinch}>
+      <GestureDetector gesture={composed}>
         <View style={styles.container}>
           <Animated.View style={[animatedStyle, { flex: 1 }]}>{children}</Animated.View>
         </View>
