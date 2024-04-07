@@ -38,20 +38,25 @@ export const GestureZoom: FC<GestureZoomItemProps> = memo(({ children }) => {
   const zoomPointX = useSharedValue(0);
   const zoomPointY = useSharedValue(0);
 
-  const resetState = () => {
+  const resetPinch = () => {
     "worklet";
     scale.value = withSpring(1, bounceBackConfig);
-    panTranslationX.value = withSpring(0, bounceBackConfig);
-    panTranslationY.value = withSpring(0, bounceBackConfig);
     pinchTranslationX.value = withSpring(0, bounceBackConfig);
     pinchTranslationY.value = withSpring(0, bounceBackConfig);
     savedScale.value = 1;
-    savedPanTranslationX.value = 0;
-    savedPanTranslationY.value = 0;
     savedPinchTranslationX.value = 0;
     savedPinchTranslationY.value = 0;
     zoomPointX.value = 0;
     zoomPointY.value = 0;
+  };
+
+  const resetPan = () => {
+    "worklet";
+
+    panTranslationX.value = withSpring(0, bounceBackConfig);
+    panTranslationY.value = withSpring(0, bounceBackConfig);
+    savedPanTranslationX.value = 0;
+    savedPanTranslationY.value = 0;
   };
 
   const pinch = Gesture.Pinch()
@@ -79,7 +84,7 @@ export const GestureZoom: FC<GestureZoomItemProps> = memo(({ children }) => {
       savedPinchTranslationX.value = pinchTranslationX.value;
       savedPinchTranslationY.value = pinchTranslationY.value;
 
-      if (scale.value < 1) resetState();
+      if (scale.value < 1) resetPinch();
     });
 
   const pan = Gesture.Pan()
@@ -91,7 +96,7 @@ export const GestureZoom: FC<GestureZoomItemProps> = memo(({ children }) => {
       savedPanTranslationX.value = panTranslationX.value;
       savedPanTranslationY.value = panTranslationY.value;
 
-      if (scale.value < 1) resetState();
+      if (scale.value < 1) resetPan();
     })
     .maxPointers(2)
     .minPointers(2);
