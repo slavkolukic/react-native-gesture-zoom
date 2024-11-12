@@ -1,5 +1,4 @@
-import { StatusBar } from "expo-status-bar";
-import { Image, StyleSheet, Text, View } from "react-native";
+import { Image, StyleSheet, View } from "react-native";
 import { GestureZoom } from "./components/GestureZoom";
 
 export default function App() {
